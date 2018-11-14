@@ -1,0 +1,64 @@
+version: '3'
+
+services:
+  jira:
+    depends_on:
+      - postgresql
+    build: ./jira
+    networks:
+      - jiranet
+    volumes:
+      - jiradata:/var/atlassian/jira
+    ports:
+      - '8080:8080'
+    environment:
+      - 'JIRA_DATABASE_URL=postgresql://jira@postgresql/jiradb'
+      - 'JIRA_DB_PASSWORD=p@ssw0rd'
+      - 'SETENV_JVM_MINIMUM_MEMORY=1g'
+      - 'SETENV_JVM_MAXIMUM_MEMORY=2g'
+      - 'JIRA_PROXY_NAME='
+      - 'JIRA_PROXY_PORT='
+      - 'JIRA_PROXY_SCHEME='
+    logging:
+      # limit logs retained on host to 25MB
+      driver: "json-file"
+      options:
+        max-size: "500k"
+        max-file: "50"
+    labels:
+      com.atb.description: "Atlassian Jira"
+      com.atb.service: "jira"
+
+  postgresql:
+    image: postgres:9.5
+    networks:
+      - jiranet
+    volumes:
+      - postgresqldata:/var/lib/postgresql/data
+    environment:
+      - 'POSTGRES_USER=jira'
+      # NEED TO GENERATE RANDOM PASSWORD
+      - 'POSTGRES_PASSWORD=p@ssw0rd'
+      - 'POSTGRES_DB=jiradb'
+      - 'POSTGRES_ENCODING=UNICODE'
+      - 'POSTGRES_COLLATE=C'
+      - 'POSTGRES_COLLATE_TYPE=C'
+    logging:
+      # limit logs retained on host to 25MB
+      driver: "json-file"
+      options:
+        max-size: "500k"
+        max-file: "50"
+    labels:
+      com.atb.description: "PostgreSQL Database Server"
+      com.atb.service: "postgresql"
+
+volumes:
+  jiradata:
+    external: false
+  postgresqldata:
+    external: false
+
+networks:
+  jiranet:
+    driver: bridge
